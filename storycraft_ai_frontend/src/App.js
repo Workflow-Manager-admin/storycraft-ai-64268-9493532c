@@ -7,43 +7,393 @@ import {
   Link
 } from 'react-router-dom';
 
-// Placeholder pages for each feature
+////////////////////////////////////////////////////////////////////////////////
+// PUBLIC_INTERFACE
+// Feature: Short Stories Page
 function ShortStories() {
-  // PUBLIC_INTERFACE
+  // Story word count options (for demonstrative purposes)
+  const wordCounts = [50, 100, 250, 500];
   return (
-    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
-      <h2>Short Stories</h2>
-      <p>This is the Short Stories feature page. Start creating your story soon!</p>
+    <div
+      className="container"
+      style={{
+        marginTop: 110,
+        marginBottom: 32,
+        minHeight: '62vh',
+        maxWidth: 620,
+        background: 'linear-gradient(90deg, #fff, #fff8ef 75%, #ffe6c5 100%)',
+        borderRadius: '13px',
+        boxShadow: '0 4px 23px rgba(245,166,35,0.09)',
+        border: '1.2px solid #fae1bb',
+        padding: '2.5em 2.3em 2.5em 2.3em',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'start',
+        gap: 18
+      }}
+      aria-label="Short Stories"
+    >
+      <span style={{ fontSize: '2.1rem', color: 'var(--accent)' }} role="img" aria-label="Books">📚</span>
+      <h1
+        className="section-title"
+        style={{
+          color: 'var(--accent)',
+          fontWeight: 800,
+          fontSize: '2.1rem',
+          margin: '0 0 10px 0'
+        }}
+      >
+        Create Your Short Story
+      </h1>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '1.07rem', margin: 0 }}>
+        Spark your creativity in seconds! With StoryBot, you can quickly write delightful tales across any genre or style. Pick a prompt, set your word count, and click to begin.
+      </p>
+      <div
+        style={{ margin: '13px 0', width: '100%' }}
+      >
+        <div style={{
+          fontWeight: 600, color: 'var(--primary)', marginBottom: 5
+        }}>Try This Prompt:</div>
+        <div style={{
+          background: '#fff4eb',
+          border: '1.3px solid #ffd3ab',
+          borderRadius: 7,
+          fontWeight: 500,
+          padding: '12px 16px',
+          fontSize: '1rem',
+          color: 'var(--accent)',
+          marginBottom: 6,
+          maxWidth: 410
+        }}>
+          "A mouse discovers a magical doorway in an old teapot."
+        </div>
+      </div>
+      <div>
+        <span style={{ fontWeight: 600, color: 'var(--primary)', marginRight: 8 }}>
+          Pick word count:
+        </span>
+        {wordCounts.map((w, i) => (
+          <button
+            className="btn"
+            style={{
+              marginRight: 10,
+              background: 'var(--surface)',
+              color: 'var(--accent)',
+              border: '1px solid var(--accent)',
+              fontWeight: 600,
+              fontSize: '0.98rem',
+              padding: '6px 20px',
+              minWidth: 0
+            }}
+            key={w}
+            tabIndex={0}
+            disabled
+          >
+            {w}
+          </button>
+        ))}
+      </div>
+      <button
+        className="btn accent"
+        style={{
+          marginTop: 20,
+          minWidth: 185,
+          fontSize: '1.15rem',
+        }}
+        tabIndex={0}
+        aria-label="Start Writing a Story"
+      >
+        Start Writing
+      </button>
     </div>
   );
 }
 
 // PUBLIC_INTERFACE
+// Feature: Plot Twist Generator Page
 function PlotTwistGenerator() {
+  const sampleTwists = [
+    "The villain is actually the protagonist’s best friend.",
+    "What seemed like magic was only advanced technology.",
+    "The real treasure was the journey, not the prize.",
+  ];
   return (
-    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
-      <h2>Plot Twist Generator</h2>
-      <p>Surprise elements will appear here! Placeholder for Plot Twist Generator.</p>
+    <div
+      className="container"
+      style={{
+        marginTop: 110,
+        marginBottom: 32,
+        minHeight: '62vh',
+        maxWidth: 620,
+        background: 'linear-gradient(95deg, #f9fdff 78%, #e4fffb 100%)',
+        borderRadius: '13px',
+        boxShadow: '0 4px 23px rgba(80,227,194,0.10)',
+        border: '1.2px solid #caf7ee',
+        padding: '2.5em 2.3em',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'start',
+        gap: 18
+      }}
+      aria-label="Plot Twist Generator"
+    >
+      <span style={{ fontSize: '2.1rem', color: 'var(--secondary)' }} role="img" aria-label="Twist symbol">🔀</span>
+      <h1
+        className="section-title"
+        style={{
+          color: 'var(--secondary)',
+          fontWeight: 800,
+          fontSize: '2rem',
+          margin: '0 0 10px 0'
+        }}
+      >
+        Add a Wild Plot Twist!
+      </h1>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '1.07rem', margin: 0 }}>
+        Supercharge your stories with unpredictable surprises. Instantly generate fresh, creative twists to keep your readers eagerly flipping pages.
+      </p>
+      <div style={{
+        fontWeight: 600, color: 'var(--primary)'
+      }}>Sample Twists:</div>
+      <ul style={{ margin: '4px 0 0 0', padding: '0 0 0 18px', color: 'var(--text-secondary)', fontSize: '1.01rem' }}>
+        {sampleTwists.map((t, i) => (
+          <li key={i} style={{ marginBottom: 2 }}>{t}</li>
+        ))}
+      </ul>
+      <div style={{
+        margin: '14px 0 0 0',
+        color: 'var(--secondary)',
+        background: '#f5fffa',
+        border: '1px solid #d7f6ea',
+        borderRadius: 7,
+        fontSize: '0.99rem',
+        padding: '11px 15px',
+        maxWidth: 410
+      }}>
+        Try our generator to break writer’s block and wow your readers!
+      </div>
+      <button
+        className="btn secondary"
+        style={{
+          marginTop: 17,
+          minWidth: 185,
+          fontSize: '1.15rem',
+        }}
+        tabIndex={0}
+        aria-label="Generate a Twist"
+      >
+        Generate a Twist
+      </button>
     </div>
   );
 }
 
 // PUBLIC_INTERFACE
+// Feature: Storytone Selector Page
 function StorytoneSelector() {
+  // List of example tones/genres and emoji icons
+  const tones = [
+    { name: 'Funny', emoji: '😂', desc: 'Quirky, playful & lighthearted.' },
+    { name: 'Spooky', emoji: '👻', desc: 'Creepy, tense & mysterious.' },
+    { name: 'Dramatic', emoji: '🎭', desc: 'Emotional, intense & heartfelt.' },
+    { name: 'Adventurous', emoji: '🧭', desc: 'Bold, daring & action-packed.' },
+    { name: 'Mysterious', emoji: '🕵️‍♂️', desc: 'Enigmatic & full of secrets.' },
+  ];
   return (
-    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
-      <h2>Storytone Selector</h2>
-      <p>Set your narrative style and tone here. Placeholder for Storytone Selector.</p>
+    <div
+      className="container"
+      style={{
+        marginTop: 110,
+        marginBottom: 32,
+        minHeight: '62vh',
+        maxWidth: 670,
+        background: 'linear-gradient(94deg, #f6fbff 78%, #e0ecfb 100%)',
+        borderRadius: '13px',
+        boxShadow: '0 4px 23px rgba(74,144,226,0.10)',
+        border: '1.2px solid #cae0f7',
+        padding: '2.5em 2.3em 2.3em 2.3em',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'start',
+        gap: 18
+      }}
+      aria-label="Storytone Selector"
+    >
+      <span style={{ fontSize: '2.1rem', color: 'var(--primary)' }} role="img" aria-label="Palette">🎨</span>
+      <h1
+        className="section-title"
+        style={{
+          color: 'var(--primary)',
+          fontWeight: 800,
+          fontSize: '2rem',
+          margin: '0 0 8px 0'
+        }}
+      >
+        Choose Your Story’s Style!
+      </h1>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '1.07rem', margin: 0 }}>
+        Preview fun tones & genres below. Pick the mood to match your tale! Icons show the flavor—click to try one (feature coming soon).
+      </p>
+      <div style={{
+        display: 'flex',
+        gap: 18,
+        margin: '12px 0 0 0',
+        flexWrap: 'wrap'
+      }}>
+        {tones.map(tone => (
+          <div key={tone.name}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              background: '#fff',
+              border: '1.2px solid var(--border-color)',
+              borderRadius: '9px',
+              boxShadow: '0 2px 10px rgba(74,144,226,0.05)',
+              padding: '13px 16px 10px 16px',
+              minWidth: 83,
+              marginBottom: 8,
+              transition: 'box-shadow 0.18s, border-color 0.16s'
+            }}>
+            <span style={{
+              fontSize: '2.3rem',
+              color: 'var(--primary)',
+              marginBottom: 3,
+              filter: tone.name === 'Spooky' ? 'opacity(0.84) grayscale(0.3)' : '',
+            }} role="img" aria-label={tone.name}>{tone.emoji}</span>
+            <span style={{
+              color: 'var(--primary)',
+              fontWeight: 670,
+              fontSize: '1.02rem'
+            }}>{tone.name}</span>
+            <span style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.97rem',
+              marginTop: 3,
+              textAlign: 'center',
+              maxWidth: 100
+            }}>{tone.desc}</span>
+            <button
+              className="btn"
+              style={{
+                marginTop: 7,
+                fontSize: '0.94rem',
+                padding: '4.5px 16px',
+                background: 'var(--background)',
+                color: 'var(--primary)',
+                border: '1px solid var(--primary)'
+              }}
+              disabled
+              tabIndex={-1}
+            >Preview</button>
+          </div>
+        ))}
+      </div>
+      <button
+        className="btn primary"
+        style={{
+          marginTop: 14,
+          minWidth: 185,
+          fontSize: '1.14rem',
+        }}
+        tabIndex={0}
+        aria-label="Preview Styles"
+      >
+        Preview Styles
+      </button>
     </div>
   );
 }
 
 // PUBLIC_INTERFACE
+// Feature: Character Creator Page
 function CharacterCreator() {
+  const exampleFields = [
+    { label: 'Name', desc: 'e.g. Captain Daisy' },
+    { label: 'Role', desc: 'e.g. Villain, Sidekick, Hero' },
+    { label: 'Age', desc: 'Numeric or "timeless"' },
+    { label: 'Favorite Thing', desc: 'e.g. Cheese, Gadgets, Cats' },
+    { label: 'Quirk', desc: 'e.g. Talks in rhyme, never runs, always smiles' }
+  ];
   return (
-    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
-      <h2>Character Creator</h2>
-      <p>Design and generate characters here. Placeholder for Character Creator.</p>
+    <div
+      className="container"
+      style={{
+        marginTop: 110,
+        marginBottom: 32,
+        minHeight: '62vh',
+        maxWidth: 670,
+        background: 'linear-gradient(93deg, #fff, #ffffff 65%, #e5fdfb 100%)',
+        borderRadius: '13px',
+        boxShadow: '0 4px 23px rgba(80,227,194,0.10)',
+        border: '1.2px solid #b8f7e6',
+        padding: '2.5em 2.3em 2.3em 2.3em',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'start',
+        gap: 18
+      }}
+      aria-label="Character Creator"
+    >
+      <span style={{ fontSize: '2.1rem', color: 'var(--secondary)' }} role="img" aria-label="Character creation">🧑‍🔬</span>
+      <h1
+        className="section-title"
+        style={{
+          color: 'var(--secondary)',
+          fontWeight: 800,
+          fontSize: '2rem',
+          margin: '0 0 10px 0'
+        }}
+      >
+        Build Your Own Character
+      </h1>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '1.07rem', margin: 0 }}>
+        Bring your ideas to life by designing custom characters! Choose names, roles, quirks, and more—plus, get a unique avatar for each persona.
+      </p>
+      <div style={{
+        marginTop: 8,
+        border: '1px solid #b4f5e3',
+        background: '#f7fffd',
+        borderRadius: 6,
+        padding: '13px 17px 8px 17px',
+        maxWidth: 405
+      }}>
+        <div style={{ fontWeight: 600, color: 'var(--secondary)', marginBottom: 6 }}>Example Fields:</div>
+        {exampleFields.map((f, i) => (
+          <div key={f.label} style={{
+            fontSize: '1.01rem',
+            marginBottom: 5,
+            color: 'var(--primary)',
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 8
+          }}>
+            <span style={{
+              width: 94, fontWeight: 640, color: 'var(--secondary)'
+            }}>{f.label}</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{f.desc}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{
+        color: 'var(--secondary)',
+        fontSize: '1rem',
+        maxWidth: 420
+      }}>
+        Click below to start building your character—name them, set their quirks, and let our AI conjure up a matching look!
+      </div>
+      <button
+        className="btn secondary"
+        style={{
+          marginTop: 14,
+          minWidth: 185,
+          fontSize: '1.14rem',
+        }}
+        tabIndex={0}
+        aria-label="Create Character"
+      >
+        Create Character
+      </button>
     </div>
   );
 }
