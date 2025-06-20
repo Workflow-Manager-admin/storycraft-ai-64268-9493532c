@@ -1,5 +1,74 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import './App.css';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link
+} from 'react-router-dom';
+
+// Placeholder pages for each feature
+function ShortStories() {
+  // PUBLIC_INTERFACE
+  return (
+    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
+      <h2>Short Stories</h2>
+      <p>This is the Short Stories feature page. Start creating your story soon!</p>
+    </div>
+  );
+}
+
+// PUBLIC_INTERFACE
+function PlotTwistGenerator() {
+  return (
+    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
+      <h2>Plot Twist Generator</h2>
+      <p>Surprise elements will appear here! Placeholder for Plot Twist Generator.</p>
+    </div>
+  );
+}
+
+// PUBLIC_INTERFACE
+function StorytoneSelector() {
+  return (
+    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
+      <h2>Storytone Selector</h2>
+      <p>Set your narrative style and tone here. Placeholder for Storytone Selector.</p>
+    </div>
+  );
+}
+
+// PUBLIC_INTERFACE
+function CharacterCreator() {
+  return (
+    <div className="container" style={{marginTop: 100, minHeight: '50vh'}}>
+      <h2>Character Creator</h2>
+      <p>Design and generate characters here. Placeholder for Character Creator.</p>
+    </div>
+  );
+}
+
+// Navigation bar with React Router links
+function NavigationBar() {
+  // PUBLIC_INTERFACE
+  return (
+    <nav className="navbar">
+      <div className="container">
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          <Link to="/" className="logo" style={{ textDecoration: 'none' }}>
+            <span className="logo-symbol">*</span> StoryCraft AI
+          </Link>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <Link className="btn" to="/short-stories" tabIndex={0}>Short Stories</Link>
+            <Link className="btn" to="/plot-twist" tabIndex={0}>Plot Twist Generator</Link>
+            <Link className="btn" to="/storytone" tabIndex={0}>Storytone Selector</Link>
+            <Link className="btn" to="/character-creator" tabIndex={0}>Character Creator</Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
 
 /**
  * Get a Dicebear avatar URL using the 'adventurer' sprite for randomness.
