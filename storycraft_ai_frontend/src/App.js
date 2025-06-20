@@ -8,88 +8,210 @@ import {
 } from 'react-router-dom';
 
 ////////////////////////////////////////////////////////////////////////////////
-// PUBLIC_INTERFACE
-// Feature: Short Stories Page
+/**
+ * PUBLIC_INTERFACE
+ * Feature: Short Stories Page
+ * Adds interactive UX for user prompt, word count, generation, display and regeneration.
+ */
 function ShortStories() {
-  // Story word count options (for demonstrative purposes)
-  const wordCounts = [50, 100, 250, 500];
+  const WORD_COUNT_PRESETS = [
+    { label: "Short", value: 50 },
+    { label: "Medium", value: 120 },
+    { label: "Long", value: 250 }
+  ];
+
+  // --- STATE ---
+  const [prompt, setPrompt] = React.useState("");
+  const [wordCount, setWordCount] = React.useState(WORD_COUNT_PRESETS[0].value);
+  const [status, setStatus] = React.useState("idle"); // 'idle'|'loading'|'success'|'error'
+  const [story, setStory] = React.useState("");
+  const [error, setError] = React.useState(null);
+
+  // For accessibility/demo: Pre-filled sample
+  const EXAMPLE_PROMPT = 'A mouse discovers a magical doorway in an old teapot.';
+
+  // --- MOCKED AI GENERATION LOGIC ---
+  // In production, you would call a real AI API here.
+  function generateFakeStory(promptText, count) {
+    // We'll just "simulate" a story from the prompt and word count
+    const sentences = [
+      "Once upon a time, ",
+      "In a land not so far away, ",
+      "Deep in a cozy kitchen, ",
+      "Unexpectedly, ",
+      "With a heart full of curiosity, "
+    ];
+    let words = promptText
+      ? [sentences[Math.floor(Math.random() * sentences.length)] + promptText]
+      : ["Once upon a time, something magical happened."];
+    // Generate text of approximate length:
+    while (words.join(" ").split(" ").length < count) {
+      words.push(
+        [
+          "The adventure grew more curious by the moment.",
+          "A twist of fate opened doors to new worlds.",
+          "Magic sparkled in every shadow.",
+          "What started as an ordinary day soon changed everything.",
+        ][Math.floor(Math.random() * 4)]
+      );
+    }
+    // Trim and return (simulate a real story)
+    return words.join(" ").split(" ").slice(0, count).join(" ") + ".";
+  }
+
+  // --- HANDLERS ---
+  const handleChangePrompt = e => setPrompt(e.target.value);
+
+  const handleChangeWordCount = val => setWordCount(val);
+
+  const handleUseExample = () => setPrompt(EXAMPLE_PROMPT);
+
+  // Main AI story generation handler
+  const handleGenerate = async () => {
+    setStatus("loading");
+    setStory("");
+    setError(null);
+    // Simulate async API call
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 600));
+      // Simulate random error, 5% chance
+      if (Math.random() < 0.05) throw new Error("AI model busy. Try again!");
+      const storyText = generateFakeStory(prompt, wordCount);
+      setStory(storyText);
+      setStatus("success");
+    } catch (e) {
+      setStatus("error");
+      setError(e.message || "Failed to generate story.");
+      setStory("");
+    }
+  };
+
+  // For regeneration: run again with same prompt/wordCount
+  const handleRegenerate = () => handleGenerate();
+
+  // Keyboard accessibility: Enter triggers generation in prompt box
+  const handleKeyDown = e => {
+    if (e.key === "Enter" && !e.shiftKey && status !== "loading") {
+      e.preventDefault();
+      handleGenerate();
+    }
+  };
+
   return (
     <div
       className="container"
       style={{
         marginTop: 110,
         marginBottom: 32,
-        minHeight: '62vh',
+        minHeight: "62vh",
         maxWidth: 620,
-        background: 'linear-gradient(90deg, #fff, #fff8ef 75%, #ffe6c5 100%)',
-        borderRadius: '13px',
-        boxShadow: '0 4px 23px rgba(245,166,35,0.09)',
-        border: '1.2px solid #fae1bb',
-        padding: '2.5em 2.3em 2.5em 2.3em',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'start',
+        background: "linear-gradient(90deg, #fff, #fff8ef 75%, #ffe6c5 100%)",
+        borderRadius: "13px",
+        boxShadow: "0 4px 23px rgba(245,166,35,0.09)",
+        border: "1.2px solid #fae1bb",
+        padding: "2.5em 2.3em 2.5em 2.3em",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "start",
         gap: 18
       }}
       aria-label="Short Stories"
     >
-      <span style={{ fontSize: '2.1rem', color: 'var(--accent)' }} role="img" aria-label="Books">📚</span>
+      <span style={{ fontSize: "2.1rem", color: "var(--accent)" }} role="img" aria-label="Books">📚</span>
       <h1
         className="section-title"
         style={{
-          color: 'var(--accent)',
+          color: "var(--accent)",
           fontWeight: 800,
-          fontSize: '2.1rem',
-          margin: '0 0 10px 0'
+          fontSize: "2.1rem",
+          margin: "0 0 10px 0"
         }}
       >
         Create Your Short Story
       </h1>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '1.07rem', margin: 0 }}>
+      <p style={{ color: "var(--text-secondary)", fontSize: "1.07rem", margin: 0 }}>
         Spark your creativity in seconds! With StoryBot, you can quickly write delightful tales across any genre or style. Pick a prompt, set your word count, and click to begin.
       </p>
-      <div
-        style={{ margin: '13px 0', width: '100%' }}
-      >
-        <div style={{
-          fontWeight: 600, color: 'var(--primary)', marginBottom: 5
-        }}>Try This Prompt:</div>
-        <div style={{
-          background: '#fff4eb',
-          border: '1.3px solid #ffd3ab',
-          borderRadius: 7,
-          fontWeight: 500,
-          padding: '12px 16px',
-          fontSize: '1rem',
-          color: 'var(--accent)',
-          marginBottom: 6,
-          maxWidth: 410
-        }}>
-          "A mouse discovers a magical doorway in an old teapot."
+      <div style={{ margin: "13px 0", width: "100%" }}>
+        <div style={{ fontWeight: 600, color: "var(--primary)", marginBottom: 5 }}>Try This Prompt:</div>
+        <div
+          style={{
+            background: "#fff4eb",
+            border: "1.3px solid #ffd3ab",
+            borderRadius: 7,
+            fontWeight: 500,
+            padding: "12px 16px",
+            fontSize: "1rem",
+            color: "var(--accent)",
+            marginBottom: 6,
+            maxWidth: 410,
+            cursor: "pointer",
+            userSelect: "none"
+          }}
+          onClick={handleUseExample}
+          tabIndex={0}
+          role="button"
+          aria-label="Use example story prompt"
+          onKeyDown={e => { if (e.key === " " || e.key === "Enter") handleUseExample(); }}
+        >
+          "{EXAMPLE_PROMPT}"
+          <span style={{
+            marginLeft: 8,
+            fontSize: "0.99em",
+            opacity: 0.71,
+            color: "var(--primary)",
+            fontWeight: 400
+          }}>
+            (Click to use)
+          </span>
         </div>
       </div>
+      <div style={{ width: "100%" }}>
+        <label htmlFor="story-prompt-field" style={{
+          fontWeight: 600, color: "var(--primary)", fontSize: "1.06rem", marginRight: 7, paddingBottom: 2, display: "block"
+        }}>
+          Your Story Prompt:
+        </label>
+        <textarea
+          id="story-prompt-field"
+          className="input-body"
+          placeholder="Describe your story idea (or click the sample above)..."
+          style={{ width: "100%", marginBottom: 10, background: "#f7fbff" }}
+          value={prompt}
+          onChange={handleChangePrompt}
+          rows={3}
+          maxLength={228}
+          aria-label="Story idea prompt"
+          disabled={status === "loading"}
+          onKeyDown={handleKeyDown}
+        />
+      </div>
       <div>
-        <span style={{ fontWeight: 600, color: 'var(--primary)', marginRight: 8 }}>
+        <span style={{ fontWeight: 600, color: "var(--primary)", marginRight: 11 }}>
           Pick word count:
         </span>
-        {wordCounts.map((w, i) => (
+        {WORD_COUNT_PRESETS.map(opt => (
           <button
             className="btn"
             style={{
               marginRight: 10,
-              background: 'var(--surface)',
-              color: 'var(--accent)',
-              border: '1px solid var(--accent)',
+              background: wordCount === opt.value ? "var(--accent)" : "var(--surface)",
+              color: wordCount === opt.value ? "#fff" : "var(--accent)",
+              border: "1px solid var(--accent)",
               fontWeight: 600,
-              fontSize: '0.98rem',
-              padding: '6px 20px',
-              minWidth: 0
+              fontSize: "0.98rem",
+              padding: "6px 20px",
+              minWidth: 0,
+              outline: wordCount === opt.value ? "2.5px solid var(--accent)" : undefined,
+              boxShadow: wordCount === opt.value ? "0 2px 11px #f5a62314" : undefined
             }}
-            key={w}
+            key={opt.value}
             tabIndex={0}
-            disabled
+            onClick={() => handleChangeWordCount(opt.value)}
+            aria-pressed={wordCount === opt.value}
+            disabled={status === "loading"}
           >
-            {w}
+            {opt.label}
           </button>
         ))}
       </div>
@@ -98,13 +220,99 @@ function ShortStories() {
         style={{
           marginTop: 20,
           minWidth: 185,
-          fontSize: '1.15rem',
+          fontSize: "1.15rem",
         }}
         tabIndex={0}
         aria-label="Start Writing a Story"
+        onClick={handleGenerate}
+        disabled={!prompt.trim() || status === "loading"}
       >
-        Start Writing
+        {status === 'loading' ? (
+          <>
+            <span className="spinner" style={{
+              marginRight: 8,
+              width: 15, height: 15,
+              border: "2.2px solid #fff", borderTop: "2.2px solid var(--primary)",
+              borderRadius: "50%", display: "inline-block", animation: "spin 0.8s linear infinite"
+            }} />
+            Generating...
+          </>
+        ) : "Generate Story"}
       </button>
+      {/* Story/Results/Errors */}
+      {(status === "success" || status === "error" || status === "loading") && (
+        <div
+          style={{
+            marginTop: 24,
+            width: "100%",
+            background: "#fffbee",
+            border: "1.5px solid #ffd889",
+            borderRadius: 8,
+            padding: "25px 19px 22px 19px",
+            minHeight: 75,
+            fontSize: "1.1rem",
+            color: "var(--text-color)",
+            boxShadow: "0 2px 12px #f5a62310",
+            position: "relative"
+          }}
+          aria-live="polite"
+          tabIndex={0}
+        >
+          {status === "loading" && (
+            <div>
+              <span className="spinner" style={{
+                marginRight: 9,
+                width: 17, height: 17,
+                border: "2.2px solid #eee", borderTop: "2.2px solid var(--accent)",
+                borderRadius: "50%", display: "inline-block", animation: "spin 1s linear infinite"
+              }} />
+              StoryBot is writing your story...
+            </div>
+          )}
+          {status === "error" && (
+            <div style={{ color: "#db2525", fontWeight: 700 }}>
+              <span role="img" aria-label="Error" style={{marginRight: 8}}>❌</span>
+              {error || "An error occurred."}
+              <button
+                className="btn"
+                style={{
+                  marginLeft: 18,
+                  fontWeight: 600,
+                  fontSize: "0.98rem", background: "#fff6f6", color: "#db2525", border: "1.3px solid #db2525" }}
+                onClick={handleRegenerate}
+                disabled={status === "loading"}
+                tabIndex={0}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+          {status === "success" && (
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "1.09rem", color: "var(--accent)", letterSpacing: "-0.02em", marginBottom: 5 }}>
+                Your Story
+              </div>
+              <div style={{ fontSize: "1.18rem", color: "#46361c", marginBottom: 9, whiteSpace: "pre-line" }}>
+                {story}
+              </div>
+              <button
+                className="btn"
+                style={{
+                  fontWeight: 600, fontSize: "0.97rem",
+                  background: "#ffe5b7", color: "var(--accent)",
+                  border: "1.3px solid #ffd395"
+                }}
+                onClick={handleRegenerate}
+                tabIndex={0}
+                aria-label="Regenerate this story"
+                disabled={status === "loading"}
+              >
+                Regenerate Story
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
