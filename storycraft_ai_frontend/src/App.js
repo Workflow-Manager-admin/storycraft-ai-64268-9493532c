@@ -12,7 +12,11 @@ import {
  * PUBLIC_INTERFACE
  * Feature: Short Stories Page
  * Adds interactive UX for user prompt, word count, generation, display and regeneration.
+ * 
+ * Now integrated with a real AI story generation API (OpenAI GPT-3.5 API via fetch).
+ * Handles loading, error states, secure client-side key entry, and displays the AI response.
  */
+
 function ShortStories() {
   const WORD_COUNT_PRESETS = [
     { label: "Short", value: 50 },
@@ -26,63 +30,102 @@ function ShortStories() {
   const [status, setStatus] = React.useState("idle"); // 'idle'|'loading'|'success'|'error'
   const [story, setStory] = React.useState("");
   const [error, setError] = React.useState(null);
+  const [apiKey, setApiKey] = React.useState(() => localStorage.getItem("openai_api_key") || "");
+  const [showKeyInput, setShowKeyInput] = React.useState(!localStorage.getItem("openai_api_key"));
 
   // For accessibility/demo: Pre-filled sample
   const EXAMPLE_PROMPT = 'A mouse discovers a magical doorway in an old teapot.';
 
-  // --- MOCKED AI GENERATION LOGIC ---
-  // In production, you would call a real AI API here.
-  function generateFakeStory(promptText, count) {
-    // We'll just "simulate" a story from the prompt and word count
-    const sentences = [
-      "Once upon a time, ",
-      "In a land not so far away, ",
-      "Deep in a cozy kitchen, ",
-      "Unexpectedly, ",
-      "With a heart full of curiosity, "
-    ];
-    let words = promptText
-      ? [sentences[Math.floor(Math.random() * sentences.length)] + promptText]
-      : ["Once upon a time, something magical happened."];
-    // Generate text of approximate length:
-    while (words.join(" ").split(" ").length < count) {
-      words.push(
-        [
-          "The adventure grew more curious by the moment.",
-          "A twist of fate opened doors to new worlds.",
-          "Magic sparkled in every shadow.",
-          "What started as an ordinary day soon changed everything.",
-        ][Math.floor(Math.random() * 4)]
-      );
-    }
-    // Trim and return (simulate a real story)
-    return words.join(" ").split(" ").slice(0, count).join(" ") + ".";
-  }
-
   // --- HANDLERS ---
   const handleChangePrompt = e => setPrompt(e.target.value);
-
   const handleChangeWordCount = val => setWordCount(val);
-
   const handleUseExample = () => setPrompt(EXAMPLE_PROMPT);
+
+  // Secure API key handling logic
+  const handleApiKeyChange = (e) => setApiKey(e.target.value);
+  const handleStoreApiKey = () => {
+    localStorage.setItem("openai_api_key", apiKey.trim());
+    setShowKeyInput(false);
+  };
+
+  // Remove stored key (for user to switch API accounts)
+  const handleRemoveApiKey = () => {
+    localStorage.removeItem("openai_api_key");
+    setApiKey("");
+    setShowKeyInput(true);
+  };
+
+  // --- REAL AI GENERATION LOGIC ---
+  async function fetchStoryFromApi(promptText, count, key) {
+    // Using OpenAI's API as the story generation endpoint.
+    // SECURITY: In production code, you would proxy this on a backend, but here for demo, accept user API key.
+    // Provide clear cues to the user that their key is only stored locally.
+    const endpoint = "https://api.openai.com/v1/chat/completions";
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key.trim()}`
+    };
+    // Compose the prompt for best results (instruct style)
+    const sysPrompt = "You are a creative AI that writes engaging, original, child-safe short stories. Output a story for the user's idea, sticking to the requested length as closely as possible.";
+    const userPrompt = `Write a creative short story (${count} words max) about: ${promptText}.`;
+
+    const body = JSON.stringify({
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: sysPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      max_tokens: Math.max(32, Math.floor(count * 1.45)), // Token guess
+      temperature: 0.94
+    });
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body
+    });
+    if (!resp.ok) {
+      let errMsg = `API Error: ${resp.status}`;
+      try {
+        const data = await resp.json();
+        if (data && data.error && data.error.message) errMsg = data.error.message;
+      } catch {}
+      throw new Error(errMsg);
+    }
+    const data = await resp.json();
+    const text = data?.choices?.[0]?.message?.content;
+    if (!text) throw new Error("No story returned by AI.");
+    return text.trim();
+  }
 
   // Main AI story generation handler
   const handleGenerate = async () => {
     setStatus("loading");
     setStory("");
     setError(null);
-    // Simulate async API call
+
+    // Check API key first
+    const key = localStorage.getItem("openai_api_key") || "";
+    if (!key) {
+      setStatus("error");
+      setError("Missing OpenAI API Key! Please enter your key.");
+      setShowKeyInput(true);
+      return;
+    }
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 600));
-      // Simulate random error, 5% chance
-      if (Math.random() < 0.05) throw new Error("AI model busy. Try again!");
-      const storyText = generateFakeStory(prompt, wordCount);
+      // Call OpenAI API
+      const storyText = await fetchStoryFromApi(prompt, wordCount, key);
       setStory(storyText);
       setStatus("success");
     } catch (e) {
       setStatus("error");
       setError(e.message || "Failed to generate story.");
       setStory("");
+      // If it's an auth error, prompt for key again
+      if (e.message && /key|token|unauthorized|auth/i.test(e.message)) {
+        setShowKeyInput(true);
+      }
     }
   };
 
@@ -132,6 +175,64 @@ function ShortStories() {
       <p style={{ color: "var(--text-secondary)", fontSize: "1.07rem", margin: 0 }}>
         Spark your creativity in seconds! With StoryBot, you can quickly write delightful tales across any genre or style. Pick a prompt, set your word count, and click to begin.
       </p>
+
+      {/* 
+        API Key Entry Modal 
+        - user provided, stored in browser localStorage (client-only)
+        - shown if key is missing or on user request
+      */}
+      {showKeyInput && (
+        <div style={{
+          background: "#fff2ce",
+          border: "1.8px solid #fac86c",
+          borderRadius: 11,
+          boxShadow: "0 4px 14px #f5a62320",
+          padding: "26px 26px 20px 26px",
+          margin: "19px 0",
+          maxWidth: 460,
+          width: "100%",
+          color: "#6d4810"
+        }}>
+          <div style={{ fontWeight: 700, fontSize: "1.13rem", marginBottom: 8 }}>
+            AI API Key Needed
+          </div>
+          <p style={{ fontSize: "1rem", margin: 0, color: "#b36c14", marginBottom: 8 }}>
+            To generate a real story with AI, <b>enter your <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">OpenAI API Key</a></b> below.<br />
+            <span style={{ fontSize: "0.96rem", color: "#b3916c" }}>(This key is never sent to our server and is only stored in your browser.)</span>
+          </p>
+          <input
+            type="password"
+            className="input-body"
+            style={{
+              width: "100%",
+              fontSize: "1.08rem",
+              margin: "10px 0 12px 0",
+              background: "#fffbe5",
+              border: "1.4px solid #ffd389",
+              color: "#7f6601"
+            }}
+            placeholder="sk-... (Your OpenAI key)"
+            value={apiKey}
+            onChange={handleApiKeyChange}
+            disabled={status === "loading"}
+            aria-label="Your OpenAI API Key"
+            autoFocus
+            onKeyDown={e => {
+              if (e.key === "Enter" && apiKey.length > 5) handleStoreApiKey();
+            }}
+          />
+          <button
+            className="btn accent"
+            style={{ marginRight: 10, minWidth: 128 }}
+            onClick={handleStoreApiKey}
+            disabled={!apiKey || apiKey.length < 20}
+            tabIndex={0}
+          >
+            Save API Key
+          </button>
+        </div>
+      )}
+
       <div style={{ margin: "13px 0", width: "100%" }}>
         <div style={{ fontWeight: 600, color: "var(--primary)", marginBottom: 5 }}>Try This Prompt:</div>
         <div
@@ -215,6 +316,22 @@ function ShortStories() {
           </button>
         ))}
       </div>
+      <div style={{ marginTop: 10, marginBottom: -5, minHeight: 28 }}>
+        {!showKeyInput && apiKey && (
+          <button
+            className="btn"
+            onClick={handleRemoveApiKey}
+            style={{
+              fontWeight: 600, fontSize: "0.88rem", padding: "5px 16px",
+              background: "#fff6e4", color: "var(--accent)", border: "1.3px solid #ffd395",
+              marginBottom: 6
+            }}
+            tabIndex={0}
+          >
+            Remove API Key
+          </button>
+        )}
+      </div>
       <button
         className="btn accent"
         style={{
@@ -225,7 +342,7 @@ function ShortStories() {
         tabIndex={0}
         aria-label="Start Writing a Story"
         onClick={handleGenerate}
-        disabled={!prompt.trim() || status === "loading"}
+        disabled={!prompt.trim() || status === "loading" || showKeyInput}
       >
         {status === 'loading' ? (
           <>
@@ -270,17 +387,22 @@ function ShortStories() {
             </div>
           )}
           {status === "error" && (
-            <div style={{ color: "#db2525", fontWeight: 700 }}>
+            <div style={{ color: "#db2525", fontWeight: 700, display: "flex", alignItems: "center", flexWrap: "wrap" }}>
               <span role="img" aria-label="Error" style={{marginRight: 8}}>❌</span>
-              {error || "An error occurred."}
+              <span>{error || "An error occurred."}</span>
+              {showKeyInput && (
+                <span style={{marginLeft: 14, color: "#b36c14", fontWeight: 500}}>
+                  Please enter your API key above.
+                </span>
+              )}
               <button
                 className="btn"
                 style={{
-                  marginLeft: 18,
+                  marginLeft: 15,
                   fontWeight: 600,
                   fontSize: "0.98rem", background: "#fff6f6", color: "#db2525", border: "1.3px solid #db2525" }}
                 onClick={handleRegenerate}
-                disabled={status === "loading"}
+                disabled={status === "loading" || showKeyInput}
                 tabIndex={0}
               >
                 Try Again
