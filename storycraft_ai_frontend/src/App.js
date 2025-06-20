@@ -32,8 +32,6 @@ function useSceneImage() {
 
     // Pixabay (try, non-auth)
     try {
-      // Pixabay requires a key, but 'key=31248734-3b322047d3e24e6067d41fae5' is their demo so we use it (for dev/demo/small apps)
-      // Docs: https://pixabay.com/api/docs/
       const q = encodeURIComponent('comic scene cartoon adventure');
       const resp = await fetch(
         `https://pixabay.com/api/?key=31248734-3b322047d3e24e6067d41fae5&q=${q}&image_type=photo,illustration&orientation=horizontal&safesearch=true&per_page=50`
@@ -54,10 +52,6 @@ function useSceneImage() {
     // Unsplash fallback (only if Pixabay failed)
     if (!got) {
       try {
-        // Unsplash API Demo (random with keywords)
-        // No key required for GET to source.unsplash.com
-        // See https://source.unsplash.com/
-        // We'll use a randomizer param to force image change
         const keywords = "comic,adventure,cartoon,scene";
         const seed = Date.now() + "_" + Math.floor(Math.random() * 99999);
         const url = `https://source.unsplash.com/480x525/?${keywords}&sig=${seed}`;
@@ -90,13 +84,11 @@ function useStoryTheme() {
     setLoading(true);
     setError(null);
     try {
-      // BoredAPI endpoint (free, public, no key): https://www.boredapi.com/api/activity/
-      // Use 'type=recreational' or no filter for variety
       const resp = await fetch('https://www.boredapi.com/api/activity?type=recreational');
       if (!resp.ok) throw new Error('API unavailable');
       const data = await resp.json();
       let idea = data.activity;
-      // Optional: Remove "Learn to", "Try", or "Go" or verbs for a more theme-like prompt
+      // Remove "Learn to", "Try", or "Go" or verbs for a more theme-like prompt
       idea = idea.replace(/^(Learn to|Try|Go|Learn|Do)\s+/i, '');
       setTheme(idea);
     } catch (e) {
@@ -115,10 +107,26 @@ function useStoryTheme() {
 function App() {
   // State to hold avatar src
   const [avatarUrl, setAvatarUrl] = useState(() => getRandomDicebearUrl());
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
-  // Handler to regenerate avatar image
+  // Handler to regenerate avatar image with feedback
   const handleRegenerate = useCallback(() => {
-    setAvatarUrl(getRandomDicebearUrl());
+    setAvatarLoading(true);
+    // Pre-load the new image (for live transition/feedback)
+    const newUrl = getRandomDicebearUrl();
+    const img = new window.Image();
+    img.src = newUrl;
+    img.onload = () => {
+      setAvatarUrl(newUrl);
+      setAvatarLoading(false);
+    };
+    img.onerror = () => {
+      // fallback: update anyway after 1s timeout for broken avatar fetch (rare)
+      setTimeout(() => {
+        setAvatarUrl(newUrl);
+        setAvatarLoading(false);
+      }, 1000);
+    };
   }, []);
 
   // Scene/Comic Images state/hooks
@@ -126,7 +134,7 @@ function App() {
     imgUrl: sceneImageUrl,
     loading: sceneLoading,
     fetchError: sceneError,
-    fetchImage: refreshSceneImage
+    fetchImage: refreshSceneImage,
   } = useSceneImage();
 
   // Story theme state/hook
@@ -134,7 +142,7 @@ function App() {
     theme: storyTheme,
     loading: themeLoading,
     error: themeError,
-    regenerate: regenerateTheme
+    regenerate: regenerateTheme,
   } = useStoryTheme();
 
   return (
@@ -160,11 +168,13 @@ function App() {
                 type="text"
                 placeholder="Enter your story title..."
                 disabled
+                aria-disabled="true"
               />
               <textarea
                 className="input-body"
                 placeholder="Describe your story idea here..."
                 disabled
+                aria-disabled="true"
               />
               {/* Story Theme Display + Regenerate Button */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 8 }}>
@@ -181,10 +191,23 @@ function App() {
                     letterSpacing: '-0.2px',
                     transition: 'opacity 0.17s',
                     opacity: themeLoading ? 0.68 : 1.0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    minWidth: 0,
                   }}
                   aria-live="polite"
+                  aria-busy={themeLoading ? "true" : "false"}
+                  tabIndex={0}
                 >
-                  {themeLoading && "Generating story theme..."}
+                  {themeLoading && (
+                    <>
+                      <span className="spinner" style={{
+                        marginRight: 8, width: 14, height: 14, border: "2px solid #ddd", borderTop: "2px solid var(--accent)",
+                        borderRadius: "50%", display: "inline-block", animation: "spin 1s linear infinite",
+                      }}></span>
+                      Generating story theme...
+                    </>
+                  )}
                   {!themeLoading && storyTheme && <span>🎯 {storyTheme}</span>}
                   {!themeLoading && themeError && (
                     <span style={{ color: '#da2828', fontWeight: 500 }}>
@@ -196,13 +219,24 @@ function App() {
                   className="btn accent"
                   onClick={regenerateTheme}
                   disabled={themeLoading}
+                  aria-busy={themeLoading ? "true" : undefined}
+                  aria-label="Regenerate story theme"
                   style={{
                     minWidth: 170,
                     marginTop: 2,
                     alignSelf: 'flex-start'
                   }}
                 >
-                  {themeLoading ? "Regenerating..." : "Regenerate Story Theme"}
+                  {themeLoading ? (
+                    <>
+                      <span className="spinner" style={{
+                        marginRight: 6, width: 13, height: 13, border: "2px solid #fff", borderTop: "2px solid var(--primary)",
+                        borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite",
+                        verticalAlign: 'middle'
+                      }} />
+                      Regenerating...
+                    </>
+                  ) : "Regenerate Story Theme"}
                 </button>
               </div>
             </div>
@@ -219,33 +253,67 @@ function App() {
                 background: 'linear-gradient(135deg, var(--secondary) 60%, var(--primary) 100%)',
                 border: '2.5px solid #fff',
                 width: 90,
-                height: 90
+                height: 90,
+                position: 'relative'
               }}>
                 {/* Avatar */}
-                <img
-                  src={avatarUrl}
-                  alt="Character Avatar"
-                  style={{
-                    width: 78,
-                    height: 78,
-                    borderRadius: '50%',
-                    background: '#fff'
-                  }}
-                  loading="lazy"
-                  draggable={false}
-                />
+                {avatarLoading ? (
+                  <span className="spinner" style={{
+                    width: 38, height: 38,
+                    border: "3px solid #eee", borderTop: "3px solid var(--secondary)",
+                    borderRadius: "50%",
+                    display: "inline-block",
+                    animation: "spin 1s linear infinite"
+                  }} aria-label="Loading avatar" />
+                ) : (
+                  <img
+                    src={avatarUrl}
+                    alt="Character Avatar"
+                    style={{
+                      width: 78,
+                      height: 78,
+                      borderRadius: '50%',
+                      background: '#fff'
+                    }}
+                    loading="lazy"
+                    draggable={false}
+                  />
+                )}
               </div>
-              <button className="btn secondary" style={{marginTop: 18}} onClick={handleRegenerate}>Regenerate Avatar</button>
+              <button
+                className="btn secondary"
+                style={{ marginTop: 18, minWidth: 170 }}
+                onClick={handleRegenerate}
+                disabled={avatarLoading}
+                aria-busy={avatarLoading ? "true" : undefined}
+                aria-label="Regenerate character avatar"
+              >
+                {avatarLoading ? (
+                  <>
+                    <span className="spinner" style={{
+                      marginRight: 6, width: 13, height: 13, border: "2px solid #fff", borderTop: "2px solid var(--secondary)",
+                      borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite",
+                      verticalAlign: 'middle'
+                    }} />
+                    Regenerating...
+                  </>
+                ) : "Regenerate Avatar"}
+              </button>
             </div>
           </section>
           {/* Section 3: Scene/Comic Images */}
           <section className="section section-scenes">
             <h2 className="section-title">Scene / Comic Images</h2>
-            <div className="section-content scene-placeholder" style={{minHeight: 100}}>
+            <div className="section-content scene-placeholder" style={{ minHeight: 100 }}>
               {sceneLoading && (
-                <>
-                  <div className="comic-image-placeholder">Loading...</div>
-                </>
+                <div className="comic-image-placeholder" aria-busy="true" aria-label="Loading scene">
+                  <span className="spinner" style={{
+                    marginRight: 7, width: 15, height: 15,
+                    border: "2px solid #eee", borderTop: "2px solid var(--primary)",
+                    borderRadius: "50%", display: "inline-block", animation: "spin 1s linear infinite"
+                  }} />
+                  Loading...
+                </div>
               )}
               {!sceneLoading && sceneImageUrl && (
                 <div
@@ -280,7 +348,11 @@ function App() {
                 </div>
               )}
               {!sceneLoading && sceneError && (
-                <div className="comic-image-placeholder" style={{color: '#da2828', fontWeight: 700, fontSize: '1rem'}}>Error loading image</div>
+                <div className="comic-image-placeholder"
+                  aria-label="Error loading scene"
+                  style={{ color: '#da2828', fontWeight: 700, fontSize: '1rem' }}>
+                  Error loading image
+                </div>
               )}
             </div>
             <button
@@ -292,12 +364,32 @@ function App() {
                 minWidth: 140
               }}
               disabled={sceneLoading}
+              aria-busy={sceneLoading ? "true" : undefined}
+              aria-label="Regenerate comic scene"
             >
-              {sceneLoading ? "Regenerating..." : "Regenerate Scene"}
+              {sceneLoading ? (
+                <>
+                  <span className="spinner" style={{
+                    marginRight: 6, width: 13, height: 13,
+                    border: "2px solid #fff", borderTop: "2px solid var(--primary)",
+                    borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite",
+                    verticalAlign: 'middle'
+                  }} />
+                  Regenerating...
+                </>
+              ) : "Regenerate Scene"}
             </button>
           </section>
         </div>
       </main>
+      <style>
+        {`
+        @keyframes spin {
+          0% { transform: rotate(0deg);}
+          100% { transform: rotate(360deg);}
+        }
+        `}
+      </style>
     </div>
   );
 }
