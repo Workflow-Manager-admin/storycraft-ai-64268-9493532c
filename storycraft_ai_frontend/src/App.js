@@ -13,8 +13,8 @@ import {
  * Feature: Short Stories Page
  * Adds interactive UX for user prompt, word count, generation, display and regeneration.
  * 
- * Now integrated with a real AI story generation API (OpenAI GPT-3.5 API via fetch).
- * Handles loading, error states, secure client-side key entry, and displays the AI response.
+ * Integrated with a real AI story generation API (OpenAI GPT-3.5 or Cohere).
+ * Handles loading, error states, secure client-side key entry, .env/config fallback, and displays the AI response.
  */
 
 function ShortStories() {
@@ -30,72 +30,140 @@ function ShortStories() {
   const [status, setStatus] = React.useState("idle"); // 'idle'|'loading'|'success'|'error'
   const [story, setStory] = React.useState("");
   const [error, setError] = React.useState(null);
-  const [apiKey, setApiKey] = React.useState(() => localStorage.getItem("openai_api_key") || "");
-  const [showKeyInput, setShowKeyInput] = React.useState(!localStorage.getItem("openai_api_key"));
+
+  // API provider selection (support OpenAI, Cohere, or custom - extensible)
+  const API_OPTIONS = [
+    { label: "OpenAI", value: "openai" },
+    { label: "Cohere", value: "cohere" }
+  ];
+  // Read from env/config if available (window.ENV injected or client .env handled pre-build)
+  const initialApiProvider = window?.ENV?.STORYCRAFT_PROVIDER || "openai";
+  const [apiProvider, setApiProvider] = React.useState(initialApiProvider);
+
+  // Try auto-load API key from window.ENV or process.env (exposed in env)
+  // Default to localStorage for user set; never persist to backend
+  const getApiKeyFromEnv = (prov) => {
+    // Many deployments inject env in window.ENV or via public env pre-build via CRA: REACT_APP_...
+    const env = (window.ENV || {});
+    if (prov === "openai" && env.REACT_APP_OPENAI_API_KEY) return env.REACT_APP_OPENAI_API_KEY;
+    if (prov === "cohere" && env.REACT_APP_COHERE_API_KEY) return env.REACT_APP_COHERE_API_KEY;
+    return null;
+  };
+
+  const storedKeyLocal = () => localStorage.getItem(`${apiProvider}_api_key`) || "";
+  const initialApiKey =
+    getApiKeyFromEnv(apiProvider) ||
+    storedKeyLocal() ||
+    "";
+
+  const [apiKey, setApiKey] = React.useState(initialApiKey);
+  const [showKeyInput, setShowKeyInput] = React.useState(!initialApiKey);
 
   // For accessibility/demo: Pre-filled sample
-  const EXAMPLE_PROMPT = 'A mouse discovers a magical doorway in an old teapot.';
+  const EXAMPLE_PROMPT = "A mouse discovers a magical doorway in an old teapot.";
 
   // --- HANDLERS ---
   const handleChangePrompt = e => setPrompt(e.target.value);
   const handleChangeWordCount = val => setWordCount(val);
   const handleUseExample = () => setPrompt(EXAMPLE_PROMPT);
 
-  // Secure API key handling logic
-  const handleApiKeyChange = (e) => setApiKey(e.target.value);
-  const handleStoreApiKey = () => {
-    localStorage.setItem("openai_api_key", apiKey.trim());
-    setShowKeyInput(false);
+  // Provider switch (to extensibly allow OpenAI, Cohere, etc.)
+  const handleProviderChange = e => {
+    setApiProvider(e.target.value);
+    // Key may change by provider (restore from env/local)
+    const key = getApiKeyFromEnv(e.target.value) || localStorage.getItem(`${e.target.value}_api_key`) || "";
+    setApiKey(key);
+    setShowKeyInput(!key);
   };
 
+  // Secure API key handling logic
+  const handleApiKeyChange = e => setApiKey(e.target.value);
+  const handleStoreApiKey = () => {
+    if (apiKey.length > 10) {
+      localStorage.setItem(`${apiProvider}_api_key`, apiKey.trim());
+      setShowKeyInput(false);
+    }
+  };
   // Remove stored key (for user to switch API accounts)
   const handleRemoveApiKey = () => {
-    localStorage.removeItem("openai_api_key");
+    localStorage.removeItem(`${apiProvider}_api_key`);
     setApiKey("");
     setShowKeyInput(true);
   };
 
-  // --- REAL AI GENERATION LOGIC ---
-  async function fetchStoryFromApi(promptText, count, key) {
-    // Using OpenAI's API as the story generation endpoint.
-    // SECURITY: In production code, you would proxy this on a backend, but here for demo, accept user API key.
-    // Provide clear cues to the user that their key is only stored locally.
-    const endpoint = "https://api.openai.com/v1/chat/completions";
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${key.trim()}`
-    };
-    // Compose the prompt for best results (instruct style)
-    const sysPrompt = "You are a creative AI that writes engaging, original, child-safe short stories. Output a story for the user's idea, sticking to the requested length as closely as possible.";
-    const userPrompt = `Write a creative short story (${count} words max) about: ${promptText}.`;
+  // --- AI STORY GENERATION LOGIC (multi-provider) ---
+  async function fetchStoryFromApi(promptText, count, key, provider) {
+    if (provider === "openai") {
+      const endpoint = "https://api.openai.com/v1/chat/completions";
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${key.trim()}`
+      };
+      // Compose the prompt for best results (instruct style)
+      const sysPrompt = "You are a creative AI that writes engaging, original, child-safe short stories. Output a story for the user's idea, sticking to the requested length as closely as possible.";
+      const userPrompt = `Write a creative short story (${count} words max) about: ${promptText}.`;
+      const body = JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: sysPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: Math.max(32, Math.floor(count * 1.45)),
+        temperature: 0.94
+      });
 
-    const body = JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: sysPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      max_tokens: Math.max(32, Math.floor(count * 1.45)), // Token guess
-      temperature: 0.94
-    });
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body
+      });
+      if (!resp.ok) {
+        let errMsg = `API Error: ${resp.status}`;
+        try {
+          const data = await resp.json();
+          if (data && data.error && data.error.message) errMsg = data.error.message;
+        } catch (e) {}
+        throw new Error(errMsg);
+      }
+      const data = await resp.json();
+      const text = data?.choices?.[0]?.message?.content;
+      if (!text) throw new Error("No story returned by AI.");
+      return text.trim();
 
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers,
-      body
-    });
-    if (!resp.ok) {
-      let errMsg = `API Error: ${resp.status}`;
-      try {
-        const data = await resp.json();
-        if (data && data.error && data.error.message) errMsg = data.error.message;
-      } catch {}
-      throw new Error(errMsg);
+    } else if (provider === "cohere") {
+      // Cohere API example
+      const endpoint = "https://api.cohere.ai/v1/chat";
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${key.trim()}`
+      };
+      // Compose instructions
+      const body = JSON.stringify({
+        model: "command-r-plus", // or "command", depending on plan
+        message: `Write a creative, family-friendly short story (${count} words max) about: ${promptText}.`,
+        max_tokens: Math.max(32, Math.floor(count * 1.45)),
+        temperature: 0.94
+      });
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body
+      });
+      if (!resp.ok) {
+        let errMsg = `Cohere API Error: ${resp.status}`;
+        try {
+          const data = await resp.json();
+          if (data && data.message) errMsg = data.message;
+        } catch (e) {}
+        throw new Error(errMsg);
+      }
+      const data = await resp.json();
+      const text = data?.text;
+      if (!text) throw new Error("No story returned by AI.");
+      return text.trim();
+    } else {
+      throw new Error("Unsupported provider selected.");
     }
-    const data = await resp.json();
-    const text = data?.choices?.[0]?.message?.content;
-    if (!text) throw new Error("No story returned by AI.");
-    return text.trim();
   }
 
   // Main AI story generation handler
@@ -104,26 +172,30 @@ function ShortStories() {
     setStory("");
     setError(null);
 
-    // Check API key first
-    const key = localStorage.getItem("openai_api_key") || "";
+    // Key: try env, then local storage, then prompt
+    const key =
+      getApiKeyFromEnv(apiProvider) ||
+      localStorage.getItem(`${apiProvider}_api_key`) ||
+      apiKey;
+
     if (!key) {
       setStatus("error");
-      setError("Missing OpenAI API Key! Please enter your key.");
+      setError(`Missing ${apiProvider === "cohere" ? "Cohere" : "OpenAI"} API Key! Please enter your key.`);
       setShowKeyInput(true);
       return;
     }
 
     try {
-      // Call OpenAI API
-      const storyText = await fetchStoryFromApi(prompt, wordCount, key);
+      // Call selected API
+      const storyText = await fetchStoryFromApi(prompt, wordCount, key, apiProvider);
       setStory(storyText);
       setStatus("success");
     } catch (e) {
       setStatus("error");
-      setError(e.message || "Failed to generate story.");
+      setError(e.message || `Failed to generate story with ${apiProvider}.`);
       setStory("");
       // If it's an auth error, prompt for key again
-      if (e.message && /key|token|unauthorized|auth/i.test(e.message)) {
+      if (e.message && /key|token|unauthorized|auth|bearer/i.test(e.message)) {
         setShowKeyInput(true);
       }
     }
