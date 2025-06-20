@@ -1,8 +1,28 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import './App.css';
+
+/**
+ * Get a Dicebear avatar URL using the 'adventurer' sprite for randomness.
+ * Uses a random seed on each call.
+ */
+function getRandomDicebearUrl() {
+  // We'll use Math.random + Date.now for a unique-ish seed on every re-generation
+  const seed = `${Math.floor(Math.random() * 1000000)}_${Date.now()}`;
+  // Example using 'adventurer' sprite set, feel free to swap to other sets
+  // https://api.dicebear.com/7.x/adventurer/svg?seed=SEED
+  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
+}
 
 // PUBLIC_INTERFACE
 function App() {
+  // State to hold avatar src
+  const [avatarUrl, setAvatarUrl] = useState(() => getRandomDicebearUrl());
+
+  // Handler to regenerate avatar image
+  const handleRegenerate = useCallback(() => {
+    setAvatarUrl(getRandomDicebearUrl());
+  }, []);
+
   return (
     <div className="app">
       <nav className="navbar">
@@ -38,12 +58,33 @@ function App() {
           {/* Section 2: Character Visuals */}
           <section className="section section-characters">
             <h2 className="section-title">Character Visuals</h2>
-            <div className="section-content character-placeholders">
-              <div className="character-avatar-placeholder">[Avatar 1]</div>
-              <div className="character-avatar-placeholder">[Avatar 2]</div>
-              <div className="character-avatar-placeholder">[Avatar 3]</div>
+            <div className="section-content character-placeholders" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div className="character-avatar-placeholder" style={{
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, var(--secondary) 60%, var(--primary) 100%)',
+                border: '2.5px solid #fff',
+                width: 90,
+                height: 90
+              }}>
+                {/* Avatar */}
+                <img
+                  src={avatarUrl}
+                  alt="Character Avatar"
+                  style={{
+                    width: 78,
+                    height: 78,
+                    borderRadius: '50%',
+                    background: '#fff'
+                  }}
+                  loading="lazy"
+                  draggable={false}
+                />
+              </div>
+              <button className="btn secondary" style={{marginTop: 18}} onClick={handleRegenerate}>Regenerate Avatar</button>
             </div>
-            <button className="btn secondary" disabled>Auto-Generate Characters</button>
           </section>
           {/* Section 3: Scene/Comic Images */}
           <section className="section section-scenes">
