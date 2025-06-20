@@ -216,6 +216,146 @@ function App() {
         </header>
       </section>
 
+      {/* Key Features Section */}
+      <section
+        className="container"
+        style={{
+          marginTop: 0,
+          marginBottom: 46,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+          alignItems: 'flex-start',
+          maxWidth: 890,
+        }}
+        aria-label="Key Features"
+      >
+        <h2
+          style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: 'var(--secondary)',
+            letterSpacing: '-0.8px',
+            margin: 0,
+            marginBottom: 10
+          }}
+          tabIndex={0}
+        >
+          Key Features
+        </h2>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 25,
+            justifyContent: 'flex-start',
+            alignItems: 'stretch',
+          }}
+        >
+          {/* Feature 1 */}
+          <div
+            style={{
+              background: 'linear-gradient(90deg, #fff, #fffaf5 88%, #fff4e4 100%)',
+              border: '1.4px solid var(--border-color)',
+              borderRadius: 14,
+              boxShadow: '0 2px 10px rgba(245,166,35,0.07)',
+              minWidth: 198,
+              flex: '1 1 210px',
+              maxWidth: 255,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 7,
+              padding: '20px 18px 18px 18px',
+              transition: 'box-shadow 0.18s, border-color 0.17s',
+            }}
+            tabIndex={0}
+            aria-label="Short Stories feature"
+          >
+            <span style={{ fontSize: '2.06rem', marginBottom: 7, color: 'var(--accent)' }} role="img" aria-label="Short Stories">📚</span>
+            <span style={{ fontWeight: 600, fontSize: '1.16rem', color: 'var(--accent)' }}>Short Stories</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '1.03rem' }}>
+              Instantly craft creative short stories with AI-generated prompts and inspiration.
+            </span>
+          </div>
+          {/* Feature 2 */}
+          <div
+            style={{
+              background: 'linear-gradient(90deg, #f9fdff 80%, #e8fcfb 100%)',
+              border: '1.4px solid var(--border-color)',
+              borderRadius: 14,
+              boxShadow: '0 2px 10px rgba(80,227,194,0.07)',
+              minWidth: 198,
+              flex: '1 1 210px',
+              maxWidth: 255,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 7,
+              padding: '20px 18px 18px 18px',
+              transition: 'box-shadow 0.18s, border-color 0.17s',
+            }}
+            tabIndex={0}
+            aria-label="Plot Twist Generator feature"
+          >
+            <span style={{ fontSize: '2.06rem', marginBottom: 7, color: 'var(--secondary)' }} role="img" aria-label="Plot Twist Generator">🔀</span>
+            <span style={{ fontWeight: 600, fontSize: '1.16rem', color: 'var(--secondary)' }}>Plot Twist Generator</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '1.03rem' }}>
+              Instantly surprise your stories with AI-driven unpredictable plot twists.
+            </span>
+          </div>
+          {/* Feature 3 */}
+          <div
+            style={{
+              background: 'linear-gradient(90deg, #f6fbff 80%, #e0ecfb 100%)',
+              border: '1.4px solid var(--border-color)',
+              borderRadius: 14,
+              boxShadow: '0 2px 10px rgba(74,144,226,0.07)',
+              minWidth: 198,
+              flex: '1 1 210px',
+              maxWidth: 255,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 7,
+              padding: '20px 18px 18px 18px',
+              transition: 'box-shadow 0.18s, border-color 0.17s',
+            }}
+            tabIndex={0}
+            aria-label="Storytone Selector feature"
+          >
+            <span style={{ fontSize: '2.06rem', marginBottom: 7, color: 'var(--primary)' }} role="img" aria-label="Storytone Selector">🎨</span>
+            <span style={{ fontWeight: 600, fontSize: '1.16rem', color: 'var(--primary)' }}>Storytone Selector</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '1.03rem' }}>
+              Choose your story’s mood—funny, spooky, dramatic, or mysterious—with a simple click.
+            </span>
+          </div>
+          {/* Feature 4 */}
+          <div
+            style={{
+              background: 'linear-gradient(90deg, #fff, #f8fffc 90%, #e3fbee 100%)',
+              border: '1.4px solid var(--border-color)',
+              borderRadius: 14,
+              boxShadow: '0 2px 10px rgba(80,227,194,0.08)',
+              minWidth: 198,
+              flex: '1 1 210px',
+              maxWidth: 255,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 7,
+              padding: '20px 18px 18px 18px',
+              transition: 'box-shadow 0.18s, border-color 0.17s',
+            }}
+            tabIndex={0}
+            aria-label="Character Creator feature"
+          >
+            <span style={{ fontSize: '2.06rem', marginBottom: 7, color: 'var(--secondary)' }} role="img" aria-label="Character Creator">🧑‍🎤</span>
+            <span style={{ fontWeight: 600, fontSize: '1.16rem', color: 'var(--secondary)' }}>Character Creator</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '1.03rem' }}>
+              Instantly generate unique character visuals and personalities using avatars and AI.
+            </span>
+          </div>
+        </div>
+      </section>
+
       <main>
         <div className="main-container">
           {/* Section 1: Story Input & Theme */}
