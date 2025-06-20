@@ -157,6 +157,65 @@ function App() {
           </div>
         </div>
       </nav>
+
+      {/* Hero section: Headline + intro paragraph */}
+      <section
+        className="container"
+        style={{
+          marginTop: 88,
+          marginBottom: 28,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+          alignItems: 'start',
+          maxWidth: 890,
+        }}
+        aria-label="Homepage Introduction"
+      >
+        <header style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+        }}>
+          {/* Headline */}
+          <h1
+            style={{
+              fontSize: '2.5rem',
+              fontWeight: 800,
+              color: 'var(--primary)',
+              margin: 0,
+              lineHeight: 1.11,
+              letterSpacing: '-1px',
+              textShadow: '0 2px 16px #e0edff45',
+              textWrap: 'balance',
+              background: 'linear-gradient(92deg, var(--primary) 60%, var(--accent))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+            tabIndex={0}
+          >
+            Unleash Your Imagination with StoryBot!
+          </h1>
+          {/* Intro paragraph */}
+          <p
+            style={{
+              fontSize: '1.32rem',
+              margin: '16px 0 0 0',
+              fontWeight: 450,
+              color: 'var(--text-secondary)',
+              lineHeight: 1.5,
+              maxWidth: 650,
+              letterSpacing: '-0.12px'
+            }}
+            tabIndex={0}
+          >
+            Create short stories, design vibrant characters, and generate comic-style scenes using the power of AI. StoryBot gives you prompts, avatars, and art generation to bring your stories to life – instantly.
+          </p>
+        </header>
+      </section>
+
       <main>
         <div className="main-container">
           {/* Section 1: Story Input & Theme */}
