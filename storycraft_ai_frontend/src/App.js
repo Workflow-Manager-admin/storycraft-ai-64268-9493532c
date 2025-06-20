@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import './App.css';
 
 /**
@@ -76,6 +76,42 @@ function useSceneImage() {
 }
 
 // PUBLIC_INTERFACE
+function useStoryTheme() {
+  /**
+   * React hook to fetch a random story theme using BoredAPI.
+   * Returns { theme, loading, error, regenerate }
+   */
+  const [theme, setTheme] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
+
+  // Fetches a new random theme from BoredAPI
+  const fetchTheme = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // BoredAPI endpoint (free, public, no key): https://www.boredapi.com/api/activity/
+      // Use 'type=recreational' or no filter for variety
+      const resp = await fetch('https://www.boredapi.com/api/activity?type=recreational');
+      if (!resp.ok) throw new Error('API unavailable');
+      const data = await resp.json();
+      let idea = data.activity;
+      // Optional: Remove "Learn to", "Try", or "Go" or verbs for a more theme-like prompt
+      idea = idea.replace(/^(Learn to|Try|Go|Learn|Do)\s+/i, '');
+      setTheme(idea);
+    } catch (e) {
+      setError('Unable to generate theme. Please try again.');
+      setTheme('');
+    }
+    setLoading(false);
+  }, []);
+
+  // Load on mount
+  useEffect(() => { fetchTheme(); }, [fetchTheme]);
+  return { theme, loading, error, regenerate: fetchTheme };
+}
+
+// PUBLIC_INTERFACE
 function App() {
   // State to hold avatar src
   const [avatarUrl, setAvatarUrl] = useState(() => getRandomDicebearUrl());
@@ -85,13 +121,21 @@ function App() {
     setAvatarUrl(getRandomDicebearUrl());
   }, []);
 
-  // --- Scene/Comic Images state/hooks ---
+  // Scene/Comic Images state/hooks
   const {
     imgUrl: sceneImageUrl,
     loading: sceneLoading,
     fetchError: sceneError,
     fetchImage: refreshSceneImage
   } = useSceneImage();
+
+  // Story theme state/hook
+  const {
+    theme: storyTheme,
+    loading: themeLoading,
+    error: themeError,
+    regenerate: regenerateTheme
+  } = useStoryTheme();
 
   return (
     <div className="app">
@@ -122,7 +166,45 @@ function App() {
                 placeholder="Describe your story idea here..."
                 disabled
               />
-              <button className="btn accent" disabled>Generate Random Theme</button>
+              {/* Story Theme Display + Regenerate Button */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 8 }}>
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    background: '#f5faff',
+                    border: '1.5px solid var(--border-color)',
+                    borderRadius: 7,
+                    fontSize: '1rem',
+                    color: 'var(--primary)',
+                    minHeight: 28,
+                    fontWeight: 500,
+                    letterSpacing: '-0.2px',
+                    transition: 'opacity 0.17s',
+                    opacity: themeLoading ? 0.68 : 1.0,
+                  }}
+                  aria-live="polite"
+                >
+                  {themeLoading && "Generating story theme..."}
+                  {!themeLoading && storyTheme && <span>🎯 {storyTheme}</span>}
+                  {!themeLoading && themeError && (
+                    <span style={{ color: '#da2828', fontWeight: 500 }}>
+                      {themeError}
+                    </span>
+                  )}
+                </div>
+                <button
+                  className="btn accent"
+                  onClick={regenerateTheme}
+                  disabled={themeLoading}
+                  style={{
+                    minWidth: 170,
+                    marginTop: 2,
+                    alignSelf: 'flex-start'
+                  }}
+                >
+                  {themeLoading ? "Regenerating..." : "Regenerate Story Theme"}
+                </button>
+              </div>
             </div>
           </section>
           {/* Section 2: Character Visuals */}
